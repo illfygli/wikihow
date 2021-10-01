@@ -23,7 +23,7 @@ export const tmp = tmpdir();
 export let tmpFileCounter = 0;
 
 async function main() {
-  const { title, titleOrig, canvas } = await makeStatus();
+  const { title, titleOrig, canvas, altText } = await makeStatus();
 
   const buffer = canvas.toBuffer();
 
@@ -51,6 +51,7 @@ async function main() {
         {
           status: titleOrig,
           media: buffer,
+          caption: altText,
         },
       ],
       [
@@ -78,7 +79,7 @@ const argv = process.argv.slice(2);
 if (argv.includes("local")) {
   console.log("Running locally!");
   const createAndSave = async () => {
-    const { title, titleOrig, canvas } = await makeStatus();
+    const { title, titleOrig, canvas, altText } = await makeStatus();
 
     const filename = join(tmp, `wikibot_${tmpFileCounter++}.png`);
     const ws = createWriteStream(filename);

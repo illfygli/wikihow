@@ -6,10 +6,14 @@ import { getBlacklist } from "./util/blacklist";
 
 const blacklist = getBlacklist();
 
-async function getWikihow(): Promise<{ title: string; image: string }> {
+type ImgSrc = string;
+type AltText = string;
+type ImgMeta = [ImgSrc, AltText];
+
+async function getWikihow(): Promise<{ title: string; image: ImgMeta }> {
   let retries = 10;
   let title: string | undefined = undefined;
-  let imgs!: string[];
+  let imgs!: ImgMeta[];
 
   async function requestAndParse() {
     const res = await axios.get("https://www.wikihow.com/Special:Randomizer");
@@ -27,8 +31,8 @@ async function getWikihow(): Promise<{ title: string; image: string }> {
 
     imgs = $("img.whcdn")
       .toArray()
-      .map((img) => img.attribs["data-src"])
-      .filter((url) => url); // only images with this attribute!
+      .map((img) => [img.attribs["data-src"], img.attribs["alt"]])
+      .filter(([url, alt]) => url && alt); // only images with these attributes!
   }
 
   await requestAndParse();
@@ -58,7 +62,7 @@ async function getWikihow(): Promise<{ title: string; image: string }> {
   if (!title || imgs.length === 0) {
     throw new Error(
       `Unable to retrieve or parse a valid Wikihow page! Last result:\nTitle: "${title}"\nImages: [${imgs
-        .map((i) => `"${i}"`)
+        .map((i) => `"${i[0]}"`)
         .join(", ")}]`
     );
   } else if (title && blacklist.test(title)) {
@@ -97,6 +101,6 @@ async function getImage(url: string): Promise<Canvas> {
 export async function makeStatus() {
   const { title } = await getWikihow();
   const { title: titleOrig, image } = await getWikihow();
-  const canvas = await getImage(image);
-  return { title, titleOrig, canvas };
+  const canvas = await getImage(image[0]);
+  return { title, titleOrig, canvas, altText: image[1] };
 }
